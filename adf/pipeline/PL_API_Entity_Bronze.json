@@ -1,0 +1,121 @@
+{
+  "name": "PL_API_Entity_Bronze",
+  "properties": {
+    "description": "Fetches paginated API data into Bronze ADLS. Watermark-controlled incremental load.",
+    "activities": [
+      {
+        "name": "LKP_Watermark",
+        "type": "Lookup",
+        "typeProperties": {
+          "source": {
+            "type": "AzureSqlSource",
+            "sqlReaderQuery": {
+              "value": "SELECT last_watermark FROM ctrl.watermark WHERE source_system = '@{pipeline().parameters.source_system}' AND entity_name = '@{pipeline().parameters.entity_name}'",
+              "type": "Expression"
+            }
+          },
+          "dataset": {
+            "referenceName": "DS_SQL_Watermark",
+            "type": "DatasetReference"
+          }
+        }
+      },
+      {
+        "name": "LKP_New_Watermark",
+        "type": "Lookup",
+        "dependsOn": [
+          {
+            "activity": "LKP_Watermark",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "source": {
+            "type": "AzureSqlSource",
+            "sqlReaderQuery": {
+              "value": "SELECT CONVERT(VARCHAR(30), GETUTCDATE(), 126) AS new_watermark",
+              "type": "Expression"
+            }
+          },
+          "dataset": {
+            "referenceName": "DS_SQL_Watermark",
+            "type": "DatasetReference"
+          }
+        }
+      },
+      {
+        "name": "UntilAllPagesFetched",
+        "type": "Until",
+        "dependsOn": [
+          {
+            "activity": "LKP_New_Watermark",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "expression": {
+            "value": "@equals(variables('has_next_page'), false)",
+            "type": "Expression"
+          },
+          "activities": [
+            {
+              "name": "AzureFunction_FetchPage",
+              "type": "AzureFunctionActivity",
+              "typeProperties": {
+                "functionName": "fn-api-ingestor",
+                "method": "POST",
+                "body": {
+                  "value": "@json(concat('{\"entity\":\"', pipeline().parameters.entity_name, '\",\"watermark_from\":\"', activity('LKP_Watermark').output.firstRow.last_watermark, '\",\"page_size\":100,\"cursor\":', if(empty(variables('current_cursor')), 'null', concat('\"', variables('current_cursor'), '\"')), ',\"page_num\":', variables('page_num'), '}'))",
+                  "type": "Expression"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "name": "SP_Update_Watermark",
+        "type": "SqlServerStoredProcedure",
+        "dependsOn": [
+          {
+            "activity": "UntilAllPagesFetched",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "typeProperties": {
+          "storedProcedureName": "[ctrl].[usp_UpdateWatermark]",
+          "storedProcedureParameters": {
+            "entity_name": {
+              "value": "@pipeline().parameters.entity_name",
+              "type": "String"
+            },
+            "source_system": {
+              "value": "@pipeline().parameters.source_system",
+              "type": "String"
+            },
+            "status": {
+              "value": "SUCCESS",
+              "type": "String"
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "source_system": {
+        "type": "string",
+        "defaultValue": "field_service_api"
+      },
+      "entity_name": {
+        "type": "string",
+        "defaultValue": "jobs"
+      }
+    }
+  }
+}
