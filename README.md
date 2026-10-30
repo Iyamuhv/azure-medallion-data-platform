@@ -164,6 +164,7 @@ DQ rules defined in `field_mappings.dq_expr` — evaluated in Silver and logged 
 
 - [`silver_transform_engine.py`](databricks/notebooks/silver/silver_transform_engine.py) — Parameterised single-notebook Silver transform
 - [`delta_writer.py`](databricks/notebooks/utils/delta_writer.py) — Write pattern handler (MERGE/APPEND/FULL_RELOAD/SNAPSHOT)
+- [Data model and layer design](docs/data-model.md) — star schema, layer rules, write patterns, modelling decisions
 - [`fn_api_ingestor/__init__.py`](functions/fn_api_ingestor/__init__.py) — Azure Function for GraphQL cursor pagination
 
 
@@ -178,5 +179,6 @@ Built and maintained by a Data Engineer with end-to-end ownership of the platfor
 ---
 
 *This repository contains anonymised code samples. All client-specific identifiers, credentials, and personal data have been removed.*
+
 
 
