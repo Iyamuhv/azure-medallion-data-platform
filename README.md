@@ -99,49 +99,32 @@ DQ rules defined in `field_mappings.dq_expr` — evaluated in Silver and logged 
 
 ## Project Structure
 
-```
 .
 ├── adf/
-│   ├── pipeline/          # ADF pipeline JSON definitions
-│   └── trigger/           # ADF trigger definitions
+│   └── pipeline/              # Sample ADF pipeline (watermark-based incremental load)
 ├── databricks/
-│   ├── ddl/               # Delta table DDL (Silver + Gold)
-│   ├── notebooks/
-│   │   ├── gold/          # Gold transform + KPI refresh notebooks
-│   │   ├── orchestration/ # Master orchestrators
-│   │   ├── setup/         # Control table setup + lookup seeding
-│   │   ├── silver/        # Silver transform engine + entity transforms
-│   │   └── utils/         # bronze_reader, delta_writer, dq_checker, watermark_manager
-│   ├── jobs/              # Databricks job definitions
-│  
+│   └── notebooks/
+│       ├── silver/            # Parameterised Silver transform engine
+│       └── utils/             # Write-pattern handler (MERGE / APPEND / FULL_RELOAD)
+├── docs/
+│   ├── architecture-diagram.png
+│   └── data-model.md
 ├── functions/
-│   └── fn_api_ingestor/  # Azure Function for Field Service GraphQL pagination
-├── governance/
-│   ├── data_governance_framework_v1.1.pdf
-│   ├── bi_governance_framework_v1.0.xlsx
-│   └── migration_plan_v1.0.pdf
-└── screenshots/
-    ├── architecture/
-    ├── adf-pipelines/
-    ├── databricks/
-    └── powerbi/
-```
+│   └── fn_api_ingestor/       # Azure Function: GraphQL cursor pagination to Bronze
+└── screenshots/               # Anonymised pipeline, notebook and dashboard screenshots
 
 ---
 
 ## Platform Metrics
 
-| Metric | Value |
+## At a Glance
+
+| | |
 |---|---|
-| Source systems integrated | 7 |
-| Bronze pipelines | 18+ |
-| Silver pipelines | 20+ |
-| Gold tables | 15+ |
-| KPIs tracked | 21 |
-| Daily records processed | ~50,000+ |
-| Data latency (Bronze → Power BI) | < 2 hours |
-| DQ pass rate | > 99% |
-| Pipeline success rate | > 99.5% |
+| Layers | Bronze, Silver, Gold, Reporting |
+| Source system types | 7 (CRM, ERP, field service, network, payments, telephony, budget) |
+| Silver write patterns | 4 (merge, append, full reload, snapshot) |
+| KPIs defined | 21, each with an owner, a definition and an agreed tolerance |
 
 ---
 
